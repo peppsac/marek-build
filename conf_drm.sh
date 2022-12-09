@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 prefix=${PREFIX:-/usr}
 
 if test x$1 = x32; then
