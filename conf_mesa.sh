@@ -42,7 +42,7 @@ else
 fi
 
 
-rm -r build${buildtype}$1
+rm -rf build${buildtype}$1
 
 meson build{buildtype}$1 --prefix $prefix --buildtype $buildtype -Dlibunwind=disabled -Dglvnd=true \
 	--native-file `dirname $0`/llvm_config_$arch.cfg \

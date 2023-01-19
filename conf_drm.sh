@@ -14,7 +14,7 @@ else
     archdir=x86_64-linux-gnu
 fi
 
-rm -r build$1
+rm -rf build$1
 
 cflags="-fno-omit-frame-pointer"
 
