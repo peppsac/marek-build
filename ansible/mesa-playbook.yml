@@ -37,6 +37,12 @@
       - meson
       - mako
       extra_args: --user
+  - name: Install numpy
+    ansible.builtin.pip:
+      name:
+      - numpy
+      extra_args: --user
+    when: build_piglit | bool
   - name: Create destination directory
     become: true
     ansible.builtin.file:

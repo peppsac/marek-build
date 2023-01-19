@@ -39,3 +39,12 @@
     - vulkan-tools
     - ccache
     state: present
+- name: "Install piglit dependencies"
+  when: build_piglit | bool
+  become: true
+  apt:
+    pkg:
+    - libpng-dev
+    - python3-numpy
+    - libxkbcommon-dev
+    state: present
