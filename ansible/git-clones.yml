@@ -49,3 +49,21 @@
     version: "{{ llvm_ref }}"
   register: git_llvm
   when: must_build_llvm
+- name: "clone waffle"
+  git:
+    repo: "https://gitlab.freedesktop.org/mesa/waffle.git"
+    dest: "{{ sources }}/waffle"
+    clone: yes
+    update: false
+    single_branch: true
+  register: git_waffle
+  when: build_piglit | bool
+- name: "clone piglit"
+  git:
+    repo: "https://gitlab.freedesktop.org/mesa/piglit.git"
+    dest: "{{ sources }}/piglit"
+    clone: yes
+    update: false
+    single_branch: true
+  register: git_piglit
+  when: build_piglit | bool

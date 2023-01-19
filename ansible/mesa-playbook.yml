@@ -3,10 +3,14 @@
   vars_files:
     - "{{ playbook_dir }}/config.yml"
   vars_prompt:
-    name: "install_globally"
-    prompt: "Should the built Mesa be made available globally?"
-    private: no
-    default: true
+    - name: "install_globally"
+      prompt: "Should the built Mesa be made available globally?"
+      private: no
+      default: true
+    - name: "build_piglit"
+      prompt: "Should piglit be built?"
+      private: no
+      default: no
   hosts: localhost
   connection: local
   environment:
@@ -91,3 +95,8 @@
         when: must_build_llvm
         ansible.builtin.debug:
           msg: "Use LD_LIBRARY_PATH={{ libglxpath.files[0].path | dirname }}:{{ libglxpath.files[0].path | dirname }}/dri:{{ libllvmpath.files[0].path | dirname }}"
+  - name: Piglit
+    when: build_piglit | bool
+    block:
+      - import_tasks: waffle.yml
+      - import_tasks: piglit.yml
