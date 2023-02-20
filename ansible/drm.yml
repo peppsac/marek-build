@@ -1,7 +1,7 @@
 ---
 - name: Check if libdrm build dir exists
   stat:
-    path: "{{ sources }}/drm/build"
+    path: "{{ sources }}/drm/{{ build_folder }}"
   register: drm_build
 - name: drm
   when: git_drm.changed or "drm" in rebuild or not drm_build.stat.exists
@@ -10,16 +10,16 @@
       args:
         chdir: "{{ sources }}/drm"
       shell:
-        "{{ playbook_dir }}/../conf_drm.sh"
+        "{{ playbook_dir }}/../conf_drm.sh {{ arch_extra_arg }}"
     - name: Build+Install drm
       args:
         chdir: "{{ sources }}/drm"
       shell:
-         ninja -C build install
+         ninja -C {{ build_folder }} install
   rescue:
     - name: Cleanup on errors
       ansible.builtin.file:
-        path: "{{ sources }}/drm/build"
+        path: "{{ sources }}/drm/{{ build_folder }}"
         state: absent
     - name: Fail
       ansible.builtin.command: /bin/false

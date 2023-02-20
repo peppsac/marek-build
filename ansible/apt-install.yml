@@ -1,5 +1,5 @@
 ---
-- name: "Install basic build tools (apt)"
+- name: "Install basic build tools (apt, 64 bits)"
   become: true
   apt:
     pkg:
@@ -39,8 +39,35 @@
     - vulkan-tools
     - ccache
     state: present
+  when: arch == 'x86_64'
+- name: "Install basic build tools (apt, i386 bits)"
+  become: true
+  apt:
+    pkg:
+    - gcc-i686-linux-gnu
+    - g++-i686-linux-gnu
+    - libxcb-shm0-dev:i386
+    - libncurses-dev:i386
+    - zlib1g-dev:i386
+    - libzstd1:i386
+    - zlib1g-dev:i386
+    - libexpat1-dev:i386
+    - libelf-dev:i386
+    - libx11-dev:i386
+    - libxcb-glx0-dev:i386
+    - libx11-xcb-dev:i386
+    - libxcb-dri2-0-dev:i386
+    - libxcb-dri3-dev:i386
+    - libxcb-present-dev:i386
+    - libxshmfence-dev:i386
+    - libxfixes-dev:i386
+    - libxxf86vm-dev:i386
+    - libxext-dev:i386
+    - libegl-dev:i386
+    state: present
+  when: arch == 'i386'
 - name: "Install piglit dependencies"
-  when: build_piglit | bool
+  when: build_piglit | bool and arch == 'x86_64'
   become: true
   apt:
     pkg:

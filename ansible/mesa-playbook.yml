@@ -14,8 +14,8 @@
   hosts: localhost
   connection: local
   environment:
-    PKG_CONFIG_PATH: "{{ prefix }}/share/pkgconfig:{{ prefix }}/lib/x86_64-linux-gnu/pkgconfig:{{ prefix }}/lib64/pkgconfig"
-    PATH: "{{ ansible_env.HOME }}/.local/bin:{{ ansible_env.PATH }}"
+    PKG_CONFIG_PATH: "{{ prefix }}/share/pkgconfig:{{ prefix }}/lib/{{ arch }}-linux-gnu/pkgconfig:{{ prefix }}/lib{{ arch | regex_search('64') }}/pkgconfig:/usr/lib/{{ arch }}-linux-gnu/pkgconfig"
+    PATH: "{{ ansible_env.HOME }}/.local/bin:{{ ansible_env.PATH }}:{{ prefix }}/bin"
     PREFIX: "{{ prefix }}"
   tasks:
   - import_tasks: apt-install.yml
@@ -27,6 +27,17 @@
     stat:
       path: "{{ llvm_config }}"
     register: llvm_conf_bin
+  - name: Set arch extra arg 32b
+    set_fact:
+      arch_extra_arg: '32'
+    when: arch == 'i386'
+  - name: Set arch extra arg 64b
+    set_fact:
+      arch_extra_arg: ''
+    when: arch == 'x86_64'
+  - name: Set build folder name
+    set_fact:
+      build_folder: build{{ arch_extra_arg }}
   - name: Determine if llvm needs to be built
     ansible.builtin.set_fact:
       must_build_llvm: "{{ not (llvm_conf_bin.stat.exists and llvm_conf_bin.stat.executable) }}"
@@ -52,20 +63,23 @@
       owner: "{{ ansible_user_id }}"
       group: "{{ ansible_user_id }}"
   - import_tasks: wayland.yml
+    when: arch == 'x86_64'
   - import_tasks: wayland-protocols.yml
+    when: arch == 'x86_64'
   - import_tasks: drm.yml
   - import_tasks: libva.yml
+    when: arch == 'x86_64'
   - import_tasks: llvm.yml
     when: must_build_llvm
   - name: llvm config file
     when: not must_build_llvm
     shell: |
-      echo "[binaries]
-      llvm-config = '{{ llvm_conf_bin.stat.path }}'" > "{{ playbook_dir }}/../llvm_config_x86_64-linux-gnu.cfg"
+      sed -i "/llvm_config/d" "{{ playbook_dir }}/../{{ arch }}.ini"
+      echo "\nllvm_config = '{{ llvm_conf_bin.stat.path }}'" >> "{{ playbook_dir }}/../{{ arch }}.ini"
   - import_tasks: mesa.yml
   - name: "Find libGLX_mesa.so"
     ansible.builtin.find:
-      paths: "{{ prefix }}"
+      paths: "{{ prefix }}/lib/{{ arch }}-linux-gnu"
       recurse: yes
       patterns: "libGLX_mesa.so"
       file_type: any
@@ -73,23 +87,23 @@
   - name: "Create 10-mesa.conf"
     become: true
     shell: |
-      echo "{{ libglxpath.files[0].path | dirname }}" > /etc/ld.so.conf.d/10-mesa.conf
+      echo "{{ libglxpath.files[0].path | dirname }}" > /etc/ld.so.conf.d/10-mesa-{{ arch }}.conf
   - name: "Find libLLVM.so"
     ansible.builtin.find:
-      paths: "{{ prefix }}"
+      paths: "{{ prefix }}/llvm-{{ arch }}"
       recurse: yes
       patterns: "libLLVM.so"
       file_type: any
     register: libllvmpath
-  - name: "Create 10-llvm.conf"
+  - name: "Create 10-llvm-{{ arch }}.conf"
     become: true
     shell: |
-      echo "{{ libllvmpath.files[0].path | dirname }}" > /etc/ld.so.conf.d/10-llvm.conf
+      echo "{{ libllvmpath.files[0].path | dirname }}" > /etc/ld.so.conf.d/10-llvm-{{ arch }}.conf
     when: must_build_llvm
   - name: ldconfig
     when: install_globally | bool
     become: true
-    shell: ldconfig
+    shell: /usr/sbin/ldconfig
   - name: print how to use
     when: not(install_globally | bool)
     block:
